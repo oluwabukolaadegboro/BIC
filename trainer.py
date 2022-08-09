@@ -7,7 +7,7 @@ from torch.optim import Adam
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torchvision.transforms import Compose, CenterCrop, Normalize, Scale, Resize, ToTensor, ToPILImage
+from torchvision.transforms import Compose, CenterCrop, Normalize, Resize, ToTensor, ToPILImage #Scale, 
 from torch.optim.lr_scheduler import LambdaLR, StepLR
 
 import numpy as np
@@ -24,20 +24,30 @@ from cifar import Cifar100
 from exemplar import Exemplar
 from copy import deepcopy
 
+# clear memory and set device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+torch.cuda.empty_cache()
+print(f'device: {device}')
+
+import gc
+gc.collect()
+
 
 class Trainer:
-    def __init__(self, total_cls):
+    def __init__(self, total_cls, path_to_train_dir, path_to_test_dir):
+    # def __init__(self, total_cls):
         self.total_cls = total_cls
         self.seen_cls = 0
-        self.dataset = Cifar100()
-        self.model = PreResNet(32,total_cls).cuda()
+        # self.dataset = Cifar100()
+        self.dataset = Cifar100(path_to_train_dir, path_to_test_dir)
+        self.model = PreResNet(32,total_cls).to(device)
         print(self.model)
         self.model = nn.DataParallel(self.model, device_ids=[0,1])
-        self.bias_layer1 = BiasLayer().cuda()
-        self.bias_layer2 = BiasLayer().cuda()
-        self.bias_layer3 = BiasLayer().cuda()
-        self.bias_layer4 = BiasLayer().cuda()
-        self.bias_layer5 = BiasLayer().cuda()
+        self.bias_layer1 = BiasLayer().to(device)
+        self.bias_layer2 = BiasLayer().to(device)
+        self.bias_layer3 = BiasLayer().to(device)
+        self.bias_layer4 = BiasLayer().to(device)
+        self.bias_layer5 = BiasLayer().to(device)
         self.bias_layers=[self.bias_layer1, self.bias_layer2, self.bias_layer3, self.bias_layer4, self.bias_layer5]
         self.input_transform= Compose([
                                 transforms.RandomHorizontalFlip(),
@@ -60,8 +70,8 @@ class Trainer:
         correct = 0
         wrong = 0
         for i, (image, label) in enumerate(testdata):
-            image = image.cuda()
-            label = label.view(-1).cuda()
+            image = image.to(device)
+            label = label.view(-1).to(device)
             p = self.model(image)
             p = self.bias_forward(p)
             pred = p[:,:self.seen_cls].argmax(dim=-1)
@@ -80,8 +90,8 @@ class Trainer:
         correct = 0
         wrong = 0
         for i, (image, label) in enumerate(evaldata):
-            image = image.cuda()
-            label = label.view(-1).cuda()
+            image = image.to(device)
+            label = label.view(-1).to(device)
             p = self.model(image)
             p = self.bias_forward(p)
             loss = criterion(p, label)
@@ -206,8 +216,8 @@ class Trainer:
         print("Training ... ")
         losses = []
         for i, (image, label) in enumerate(tqdm(train_data)):
-            image = image.cuda()
-            label = label.view(-1).cuda()
+            image = image.to(device)
+            label = label.view(-1).to(device)
             p = self.model(image)
             p = self.bias_forward(p)
             loss = criterion(p[:,:self.seen_cls], label)
@@ -225,8 +235,8 @@ class Trainer:
         alpha = (self.seen_cls - 20)/ self.seen_cls
         print("classification proportion 1-alpha = ", 1-alpha)
         for i, (image, label) in enumerate(tqdm(train_data)):
-            image = image.cuda()
-            label = label.view(-1).cuda()
+            image = image.to(device)
+            label = label.view(-1).to(device)
             p = self.model(image)
             p = self.bias_forward(p)
             with torch.no_grad():
@@ -249,8 +259,8 @@ class Trainer:
         print("Training ... ")
         losses = []
         for i, (image, label) in enumerate(tqdm(train_data)):
-            image = image.cuda()
-            label = label.view(-1).cuda()
+            image = image.to(device)
+            label = label.view(-1).to(device)
             p = self.model(image)
             p = self.bias_forward(p)
             loss = criterion(p[:,:self.seen_cls], label)
@@ -264,8 +274,8 @@ class Trainer:
         print("Evaluating ... ")
         losses = []
         for i, (image, label) in enumerate(tqdm(val_bias_data)):
-            image = image.cuda()
-            label = label.view(-1).cuda()
+            image = image.to(device)
+            label = label.view(-1).to(device)
             p = self.model(image)
             p = self.bias_forward(p)
             loss = criterion(p[:,:self.seen_cls], label)

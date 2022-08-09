@@ -5,11 +5,15 @@ import torchvision.models as models
 from torch.nn import functional as F
 import utils
 
-
 import torch.nn as nn
 import math
 
+# clear memory and set device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+torch.cuda.empty_cache()
 
+
+# Models
 __all__ = ['preresnet']
 
 def conv3x3(in_planes, out_planes, stride=1):
@@ -166,8 +170,8 @@ def preresnet(**kwargs):
 class BiasLayer(nn.Module):
     def __init__(self):
         super(BiasLayer, self).__init__()
-        self.alpha = nn.Parameter(torch.ones(1, requires_grad=True, device="cuda"))
-        self.beta = nn.Parameter(torch.zeros(1, requires_grad=True, device="cuda"))
+        self.alpha = nn.Parameter(torch.ones(1, requires_grad=True, device=device)) #device="cuda"
+        self.beta = nn.Parameter(torch.zeros(1, requires_grad=True, device=device)) #device="cuda"
     def forward(self, x):
         return self.alpha * x + self.beta
     def printParam(self, i):
