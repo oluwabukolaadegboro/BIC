@@ -27,7 +27,7 @@ from copy import deepcopy
 # clear memory and set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.cuda.empty_cache()
-print(f'device: {device}')
+# print(f'device: {device}')
 
 import gc
 gc.collect()
@@ -125,7 +125,7 @@ class Trainer:
 
         test_accs = []
         for inc_i in range(dataset.batch_num):
-            print(f"Incremental num : {inc_i}")
+            # print(f"Incremental num : {inc_i}")
             train, val, test = dataset.getNextClasses(inc_i)
             print(len(train), len(val), len(test))
             train_x, train_y = zip(*train)

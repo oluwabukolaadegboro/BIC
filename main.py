@@ -18,13 +18,12 @@ parser.add_argument('--path_to_test_dir', default = './data/cifar-100-python/tes
 
 args = parser.parse_args()
 
-
 #To download the CIFAR100 data from PyTorch 
 if args.path_to_train_dir is './data/cifar-100-python/train':
     train_data = CIFAR100(download=True,root="./data")
 if args.path_to_test_dir is './data/cifar-100-python/test':
     test_data = CIFAR100(root="./data",train=False)
-print(f'train_data: \n{train_data} \n\n test_data: \n{test_data}')
+# print(f'train_data: \n{train_data} \n\n test_data: \n{test_data}')
 
 
 if __name__ == "__main__":
